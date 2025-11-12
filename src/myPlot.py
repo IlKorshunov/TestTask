@@ -164,10 +164,20 @@ class DataVisualizer:
             filename: имя файла
             top_n: количество топ признаков
         """
-        numeric_df = df.select_dtypes(include=[np.number])
+        numeric_df = df.select_dtypes(include=[np.number]).copy()
         
         if len(numeric_df.columns) < 2:
             print(f"Недостаточно числовых признаков для корреляции ({len(numeric_df.columns)})")
+            return
+        
+        numeric_df = numeric_df.dropna(axis=1, how='all')
+        
+        variances = numeric_df.var()
+        non_constant = variances[variances > 1e-10].index.tolist()
+        numeric_df = numeric_df[non_constant]
+        
+        if len(numeric_df.columns) < 2:
+            print(f"Недостаточно признаков с вариацией для корреляции ({len(numeric_df.columns)})")
             return
         
         if 'delta' in numeric_df.columns and len(numeric_df.columns) > top_n:
@@ -177,11 +187,12 @@ class DataVisualizer:
         
         corr_matrix = numeric_df.corr()
         
-        plt.figure(figsize=(12, 10))
+        plt.figure(figsize=(max(12, len(corr_matrix.columns) * 0.8), max(10, len(corr_matrix.columns) * 0.8)))
         mask = np.triu(np.ones_like(corr_matrix, dtype=bool), k=1)
         
         sns.heatmap(corr_matrix, mask=mask, annot=True, fmt='.2f', cmap='coolwarm', 
-                   center=0, square=True, linewidths=1, cbar_kws={"shrink": 0.8})
+                   center=0, square=True, linewidths=1, cbar_kws={"shrink": 0.8},
+                   vmin=-1, vmax=1)
         
         plt.title(f'Корреляционная матрица: {stage_name}', fontsize=14, fontweight='bold', pad=20)
         plt.tight_layout()
