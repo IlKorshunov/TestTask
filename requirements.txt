@@ -1,0 +1,9 @@
+pandas
+numpy
+matplotlib
+seaborn
+polars
+duckdb
+scikit-learn
+torch
+skorch
